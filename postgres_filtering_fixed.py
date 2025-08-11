@@ -6,12 +6,10 @@ def demonstrate_postgres_filtering():
     """
     Demonstrate various PostgreSQL filtering techniques for creating personalized datasets
     """
-    # Create connection to PostgreSQL
     engine = create_engine('postgresql://cardiovascular_user:password123@localhost/cardiovascular_db')
     
     print("=== PostgreSQL Data Filtering Examples ===\n")
     
-    # Example 6: Creating a personalized view/table
     print("6. Creating a Personalized View for Analysis")
     create_view_query = text("""
     CREATE OR REPLACE VIEW high_risk_patients AS
@@ -44,14 +42,14 @@ def demonstrate_postgres_filtering():
     AND diastolic IS NOT NULL;
     """)
     
-    # Execute the view creation
+    
     with engine.connect() as conn:
         conn.execute(create_view_query)
         conn.commit()
     
     print("Created 'high_risk_patients' view successfully!")
     
-    # Query the new view
+    
     view_query = """
     SELECT user_id, age, gender, age_risk_category, health_risk_category, has_cardiovascular_disease
     FROM high_risk_patients 
@@ -63,7 +61,7 @@ def demonstrate_postgres_filtering():
     print(view_result)
     print()
     
-    # Example 7: Aggregation for insights
+    
     print("7. Aggregation Queries for Insights")
     agg_query = """
     SELECT 
@@ -121,12 +119,12 @@ def create_personalized_datasets():
         conn.execute(ml_query)
         conn.commit()
     
-    # Check the created table
+    
     check_query = "SELECT COUNT(*) as complete_cases FROM ml_ready_data;"
     result = pd.read_sql(check_query, engine)
     print(f"Created ML-ready dataset with {result.iloc[0]['complete_cases']} complete cases")
     
-    # Dataset 2: High-risk population for targeted intervention
+    
     print("\n2. Creating high-risk population dataset")
     high_risk_query = text("""
     DROP TABLE IF EXISTS high_risk_population;
@@ -152,11 +150,11 @@ def create_personalized_datasets():
 if __name__ == "__main__":
     print("Starting PostgreSQL filtering demonstrations...\n")
     
-    # Run filtering examples
+    
     demonstrate_postgres_filtering()
     
-    # Create personalized datasets
+    
     create_personalized_datasets()
     
-    print("\n🎉 All PostgreSQL filtering examples completed successfully!")
+    print("\n All PostgreSQL filtering examples completed successfully!")
 
