@@ -19,7 +19,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Simplified CSS for clean UI
+
 st.markdown("""
 <style>
     .main-header {
@@ -36,9 +36,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# -----------------------
-# Database and Data Utils
-# -----------------------
+
 
 @st.cache_resource
 def get_database_connection():
@@ -47,24 +45,24 @@ def get_database_connection():
 
 def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
     """Preprocess raw data to match expected model features."""
-    # Clean column names
+    
     df.columns = df.columns.str.replace(" ", "_").str.replace(":", "").str.lower()
 
-    # Rename to consistent names when present
+    
     df = df.rename(columns={
         "profile_hypertensive": "hypertensive",
         "total_income": "income_level"
     })
 
-    # Derive gender_male but keep original gender for charts
+    
     if "gender" in df.columns and "gender_male" not in df.columns:
         df["gender_male"] = df["gender"].apply(lambda x: 1 if str(x).strip().lower() in ["male", "m", "1"] else 0)
 
-    # Derive low_income but keep original income_level for display
+    
     if "income_level" in df.columns and "low_income" not in df.columns:
         df["low_income"] = df["income_level"].apply(lambda x: 1 if str(x).strip().lower() in ["lower class", "low", "lower"] else 0)
 
-    # Cast boolean-like columns
+    
     for col in ["is_poor", "is_freedom_fighter", "had_stroke", "diabetic", "hypertensive", "has_cardiovascular_disease"]:
         if col in df.columns:
             if df[col].dtype == "bool":
@@ -83,9 +81,7 @@ def load_data():
     df = pd.read_sql(query, engine)
     return preprocess_data(df)
 
-# -----------------------
-# Statistical Significance
-# -----------------------
+
 
 @st.cache_data
 def perform_statistical_analysis():
@@ -132,11 +128,10 @@ def train_model():
     """Train Random Forest model focusing on key features"""
     df = load_data()
     
-    # Focus on key features: had_stroke, diabetic, hypertensive + supporting features
     key_features = ["had_stroke", "diabetic", "hypertensive"]
     supporting_features = ["age", "gender_male", "systolic", "diastolic", "bmi"]
     
-    # Check which features are available
+
     available_features = []
     for feature in key_features + supporting_features:
         if feature in df.columns:
@@ -149,7 +144,7 @@ def train_model():
     X = df[available_features]
     y = df["has_cardiovascular_disease"]
     
-    # Remove rows with missing target
+    # Remove rows with missing targe
     mask = ~y.isna()
     X = X[mask]
     y = y[mask]
@@ -172,9 +167,7 @@ def train_model():
 
     return model, X_test, y_test, y_pred, y_proba, feature_importance
 
-# -----------------------
-# AI Agent (Ollama)
-# -----------------------
+
 
 @st.cache_resource
 def initialize_ai_agent():
@@ -183,7 +176,7 @@ def initialize_ai_agent():
         from langchain_community.llms import Ollama
         from langchain.schema import HumanMessage
         
-        # Initialize Ollama with tinyllama model
+        
         llm = Ollama(model="tinyllama")
         return llm
     except Exception as e:
@@ -215,9 +208,7 @@ def query_ai_agent(llm, question, context=""):
     except Exception as e:
         return f"Error querying AI agent: Ollama call failed with status code 404. Maybe your model is not found and you should pull the model with ollama pull tinyllama."
 
-# -----------------------
-# Main Application
-# -----------------------
+
 
 def main():
     # Simple Header
@@ -251,24 +242,24 @@ def main():
         diabetes_rate = (df["diabetic"].sum() / max(len(df), 1)) * 100 if "diabetic" in df.columns else 0
         st.metric("Diabetes Rate", f"{diabetes_rate:.2f}%")
 
-    # Top 3 Significant Features Chart
+    
     st.markdown("""<div class="section-header"><h3>Top 3 Statistically Significant Risk Factors</h3></div>""", unsafe_allow_html=True)
     
     with st.spinner("Analyzing statistical significance..."):
         results_df = perform_statistical_analysis()
     
-    # Get top 3 significant features
+    
     significant_df = results_df[results_df["Statistically Significant (p < 0.05)"] == "Yes"]
     top_3_features = significant_df.nsmallest(3, "P-value").copy()
     
     if not top_3_features.empty:
-        # Calculate -log10(P-value) BEFORE plotting
+       
         top_3_features["-log10(P-value)"] = -np.log10(top_3_features["P-value"].replace(0, np.finfo(float).eps))
 
         col1, col2 = st.columns([2, 1])
         
         with col1:
-            # Simple bar chart of top 3 features
+            
             fig = px.bar(
                 top_3_features,
                 x="Feature",
@@ -288,7 +279,7 @@ def main():
     else:
         st.info("No statistically significant features found at p < 0.05")
 
-    # Simplified tabbed interface
+    
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
         "Risk Factor Analysis", 
         "Model Performance", 
@@ -300,7 +291,7 @@ def main():
     with tab1:
         st.markdown("""<div class="section-header"><h3>Key Risk Factors Analysis</h3></div>""", unsafe_allow_html=True)
         
-        # Focus on the three key features
+       
         key_features = ["had_stroke", "diabetic", "hypertensive"]
         
         col1, col2, col3 = st.columns(3)
@@ -310,7 +301,7 @@ def main():
                 with [col1, col2, col3][i]:
                     st.subheader(f"{feature.replace('_', ' ').title()}")
                     
-                    # Simple distribution chart
+                    
                     if "has_cardiovascular_disease" in df.columns:
                         crosstab = pd.crosstab(df[feature], df["has_cardiovascular_disease"])
                         fig = px.bar(
@@ -321,7 +312,7 @@ def main():
                         fig.update_layout(barmode="stack", height=300, showlegend=False)
                         st.plotly_chart(fig, use_container_width=True)
                     
-                    # Statistics
+                    
                     positive_rate = (df[feature].sum() / len(df)) * 100
                     st.metric(f"{feature.replace('_', ' ').title()} Rate", f"{positive_rate:.1f}%")
                     
@@ -340,7 +331,7 @@ def main():
         if model_results[0] is not None:
             model, X_test, y_test, y_pred, y_proba, feature_importance = model_results
             
-            # Performance metrics
+            
             col1, col2, col3 = st.columns(3)
             with col1:
                 accuracy = float((y_pred == y_test).mean())
@@ -353,7 +344,7 @@ def main():
                 precision = report.get("1", {}).get("precision", float("nan"))
                 st.metric("Precision", f"{precision:.3f}" if not np.isnan(precision) else "N/A")
 
-            # Feature importance
+            
             col1, col2 = st.columns(2)
             
             with col1:
