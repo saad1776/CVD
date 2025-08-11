@@ -27,14 +27,8 @@ class CardiovascularAnalysisAgent:
         # Initialize database connection
         self.engine = create_engine(db_connection_string)
         self.db = SQLDatabase(self.engine)
-        
-        # Create SQL toolkit
         self.toolkit = SQLDatabaseToolkit(db=self.db, llm=self.llm)
-        
-        # Create custom tools
         self.custom_tools = self._create_custom_tools()
-        
-        # Create the agent
         self.agent = create_sql_agent(
             llm=self.llm,
             toolkit=self.toolkit,
@@ -43,7 +37,6 @@ class CardiovascularAnalysisAgent:
             extra_tools=self.custom_tools
         )
         
-        # Define system context
         self.system_context = """
         You are an expert cardiovascular disease analyst with access to a patient database containing 30,000 records.
         
@@ -126,7 +119,6 @@ class CardiovascularAnalysisAgent:
             except Exception as e:
                 return f"Error analyzing risk groups: {str(e)}"
         
-        # Create tool objects
         tools = [
             Tool(
                 name="correlation_analysis",
@@ -155,7 +147,6 @@ class CardiovascularAnalysisAgent:
     def query(self, user_question: str) -> str:
         """Process user query and return analytical response"""
         
-        # Enhance the question with context
         enhanced_prompt = f"""
         {self.system_context}
         
@@ -216,15 +207,12 @@ class CardiovascularAnalysisAgent:
         
         return insights
 
-# Example usage and testing
 def test_agent():
     """Test the cardiovascular analysis agent"""
     
-    # Initialize agent
     db_connection = "postgresql://postgres:123@localhost:5432/test_db"
     agent = CardiovascularAnalysisAgent(db_connection)
     
-    # Test queries
     test_questions = [
         "What does it mean that stroke has such a low p-value?",
         "Why might gender not be statistically significant?",
